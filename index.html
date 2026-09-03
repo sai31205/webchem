@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="A beautifully structured place to learn chemistry from A to Z and explore reactions." />
+    <title>Elemental — Learn Chemistry</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-glow glow-one"></div>
+    <div class="page-glow glow-two"></div>
+
+    <header class="site-header container">
+      <a class="brand" href="#top" aria-label="Elemental home">
+        <span class="brand-mark"><i></i><i></i><i></i></span>
+        <span>elemental<span class="brand-dot">.</span></span>
+      </a>
+      <nav class="main-nav" aria-label="Primary navigation">
+        <a class="active" href="#learn">Learn</a>
+        <a href="#reactions">Reactions</a>
+        <a href="#study-kit">Study kit</a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-button search-toggle" aria-label="Open search">⌕</button>
+        <button class="profile-button" aria-label="Open profile">R<span>↗</span></button>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero container" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow"><span></span> the chemistry learning studio</p>
+          <h1 id="hero-title">Make sense of<br /><em>everything</em> chemical.</h1>
+          <p class="hero-text">From your first atom to advanced organic mechanisms, learn chemistry in a sequence that actually clicks.</p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#learn">Start learning <span>→</span></a>
+            <button class="button button-quiet" id="surpriseMe">Surprise me <span>✦</span></button>
+          </div>
+          <div class="mini-proof">
+            <div class="avatar-stack" aria-hidden="true"><b>J</b><b>M</b><b>S</b><b>+</b></div>
+            <span>Join <strong>28,000+</strong> curious minds</span>
+          </div>
+        </div>
+        <div class="hero-art" aria-label="Molecular illustration">
+          <div class="orbit orbit-a"></div><div class="orbit orbit-b"></div><div class="orbit orbit-c"></div>
+          <div class="atom atom-main"><span>8</span><small>O</small></div>
+          <div class="atom atom-coral"><span>6</span><small>C</small></div>
+          <div class="atom atom-mint"><span>1</span><small>H</small></div>
+          <div class="atom atom-gold"><span>7</span><small>N</small></div>
+          <div class="molecule-label label-one">Covalent bond <i>→</i></div>
+          <div class="molecule-label label-two">atomic no. 08</div>
+          <div class="spark spark-one">✦</div><div class="spark spark-two">+</div><div class="spark spark-three">✧</div>
+        </div>
+      </section>
+
+      <section class="stats-strip container" aria-label="Learning statistics">
+        <div><strong>12</strong><span>core subjects</span></div>
+        <div><strong>126<span>+</span></strong><span>guided lessons</span></div>
+        <div><strong>126<span>+</span></strong><span>reactions to explore</span></div>
+        <div class="daily-note"><i>✦</i><span><b>Daily spark</b><br />Why does ice float?</span><button id="dailySpark" aria-label="Read daily spark">→</button></div>
+      </section>
+
+      <section class="learning-section container" id="learn" aria-labelledby="learn-title">
+        <div class="section-heading">
+          <div><p class="eyebrow"><span></span> learn, step by step</p><h2 id="learn-title">Your chemistry map.</h2></div>
+          <p>Choose a path, follow the building blocks, and make every new idea stick.</p>
+        </div>
+        <div class="path-grid" id="pathGrid"></div>
+        <div class="curriculum-note"><span>✦</span><p><strong>Not sure where to begin?</strong> Take a 3-minute placement quiz and we'll point you to the right first lesson.</p><button id="quizButton">Find my path <span>→</span></button></div>
+      </section>
+
+      <div class="path-overlay" id="pathOverlay" aria-hidden="true">
+        <section class="path-drawer" id="pathDrawer" aria-labelledby="drawerTitle" aria-modal="true" role="dialog">
+          <button class="drawer-close" id="drawerClose" aria-label="Close learning path">×</button>
+          <p class="eyebrow"><span></span> guided learning path</p>
+          <div class="drawer-head"><span class="drawer-symbol" id="drawerSymbol">C</span><div><p class="drawer-number" id="drawerNumber">01</p><h2 id="drawerTitle">Chemistry foundations</h2></div></div>
+          <p class="drawer-intro" id="drawerIntro"></p>
+          <div class="progress-label"><span>YOUR PATH</span><span id="drawerLessonCount">0 lessons</span></div>
+          <ol class="lesson-list" id="lessonList"></ol>
+          <button class="button button-primary drawer-start" id="drawerStart">Begin first lesson <span>→</span></button>
+        </section>
+      </div>
+
+      <div class="lesson-overlay" id="lessonOverlay" aria-hidden="true">
+        <article class="lesson-reader" role="dialog" aria-modal="true" aria-labelledby="lessonTitle">
+          <div class="lesson-reader-top"><button class="lesson-back" id="lessonBack">← Back to path</button><button class="drawer-close" id="lessonClose" aria-label="Close lesson">×</button></div>
+          <p class="eyebrow"><span></span> <span id="lessonPathLabel">PATH 01</span></p>
+          <p class="lesson-step" id="lessonStep">LESSON 01 OF 04</p>
+          <h2 id="lessonTitle">Matter & its properties</h2>
+          <p class="lesson-deck" id="lessonDeck"></p>
+          <div class="lesson-reading"><p id="lessonBody"></p><p class="lesson-deepen" id="lessonDeepen"></p><div class="lesson-example"><span>WORK IT OUT</span><p id="lessonExample"></p></div><div class="lesson-key"><span>KEY IDEA</span><p id="lessonKey"></p></div></div>
+          <div class="lesson-check"><p class="tool-type">QUICK CHECK</p><h3 id="lessonCheck"></h3><button class="reveal-answer" id="revealAnswer">Reveal answer</button><p class="lesson-answer" id="lessonAnswer"></p></div>
+          <div class="lesson-navigation"><button id="previousLesson">← Previous</button><button class="button button-primary" id="nextLesson">Next lesson <span>→</span></button></div>
+        </article>
+      </div>
+
+      <section class="reaction-section" id="reactions" aria-labelledby="reactions-title">
+        <div class="container">
+          <div class="reaction-topline">
+            <div><p class="eyebrow coral"><span></span> reaction library</p><h2 id="reactions-title">See chemistry <em>happen.</em></h2></div>
+            <button class="text-link" id="randomReaction">Show me a reaction <span>↗</span></button>
+          </div>
+          <div class="reaction-toolbar">
+            <label class="reaction-search"><span>⌕</span><input id="reactionSearch" type="search" placeholder="Search reactions, reagents, concepts…" /></label>
+            <div class="filters" id="reactionFilters" aria-label="Filter reactions"></div>
+          </div>
+          <div class="reaction-layout">
+            <article class="reaction-feature" id="reactionFeature" aria-live="polite"></article>
+            <aside class="reaction-list" id="reactionList" aria-label="Reaction list"></aside>
+          </div>
+        </div>
+      </section>
+
+      <section class="study-section container" id="study-kit" aria-labelledby="study-title">
+        <div class="section-heading compact">
+          <div><p class="eyebrow"><span></span> keep it close</p><h2 id="study-title">A study kit for<br /><em>curious brains.</em></h2></div>
+          <p>Small, focused tools to help you understand, recall, and solve with confidence.</p>
+        </div>
+        <div class="study-grid">
+          <article class="tool-card period-card"><div class="tool-icon">He</div><p class="tool-type">REFERENCE</p><h3>Interactive periodic table</h3><p>Find every element's story, trend, and personality.</p><button class="card-link launch-subject" data-subject="Inorganic chemistry">Explore elements <span>→</span></button><div class="table-squares" aria-hidden="true"></div></article>
+          <article class="tool-card quiz-card"><div class="quiz-top"><span>QUICK CHECK</span><span>01 / 05</span></div><h3>What is the pH<br />of pure water?</h3><div class="answers"><button data-answer="wrong">pH 0</button><button data-answer="right">pH 7</button><button data-answer="wrong">pH 14</button></div><p class="quiz-feedback" id="quizFeedback">Pick an answer to check yourself.</p></article>
+          <article class="tool-card formula-card"><p class="tool-type">FORMULA DESK</p><div class="formula-display">n <span>=</span> m <span>÷</span> M</div><h3>Formula sheets</h3><p>The equations you need, explained in plain English.</p><button class="card-link launch-subject" data-subject="Stoichiometry">Open the desk <span>→</span></button></article>
+        </div>
+      </section>
+
+      <section class="newsletter container">
+        <div><p class="eyebrow"><span></span> a little chemistry, weekly</p><h2>One good thing<br />to learn this week.</h2></div>
+        <form id="newsletterForm"><label class="sr-only" for="email">Your email address</label><input id="email" type="email" placeholder="Your email address" required /><button type="submit">Get the weekly spark <span>→</span></button><p id="newsletterMessage" aria-live="polite"></p></form>
+      </section>
+    </main>
+
+    <footer class="site-footer container"><a class="brand" href="#top"><span class="brand-mark"><i></i><i></i><i></i></span><span>elemental<span class="brand-dot">.</span></span></a><p>Built for the joy of figuring it out.</p><div><a href="#learn">Start here</a><a href="#reactions">Reactions</a><a href="#study-kit">Study kit</a></div></footer>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <div class="search-overlay" id="searchOverlay" aria-hidden="true"><div class="search-dialog"><button class="close-search" aria-label="Close search">×</button><p class="eyebrow"><span></span> find a topic</p><label><span>⌕</span><input id="globalSearch" type="search" placeholder="Try “stoichiometry” or “esters”" autofocus /></label><div id="searchResults" class="search-results"><p>Start typing to explore lessons and reactions.</p></div></div></div>
+    <script src="app.js"></script>
+  </body>
+</html>

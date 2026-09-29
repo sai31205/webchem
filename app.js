@@ -481,6 +481,160 @@ document.querySelector('#surpriseMe').addEventListener('click', () => { document
 document.querySelectorAll('[data-answer]').forEach(button => button.addEventListener('click', () => { document.querySelectorAll('[data-answer]').forEach(item => item.classList.remove('correct', 'incorrect')); const correct = button.dataset.answer === 'right'; button.classList.add(correct ? 'correct' : 'incorrect'); document.querySelector('#quizFeedback').textContent = correct ? 'Exactly. Pure water is neutral at 25°C.' : 'Almost—pure water is neutral, which is pH 7 at 25°C.'; }));
 document.querySelector('#newsletterForm').addEventListener('submit', event => { event.preventDefault(); const email = document.querySelector('#email'); document.querySelector('#newsletterMessage').textContent = `You’re on the list, ${email.value}. See you next week.`; email.value = ''; });
 
+// Internet chemistry search: local lessons plus live PubChem and Wikipedia results.
+const internetSearchOverlay = document.querySelector('#internetSearchOverlay');
+const internetSearch = document.querySelector('#internetSearch');
+const internetSearchResults = document.querySelector('#internetSearchResults');
+const profileOverlay = document.querySelector('#profileOverlay');
+let internetSearchTimer;
+let internetSearchRequest = 0;
+
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
+}
+
+function webSearchURL(term) {
+  return `https://www.google.com/search?q=${encodeURIComponent(`${term} chemistry`)}`;
+}
+
+function openInternetSearch() {
+  internetSearchOverlay.classList.add('open');
+  internetSearchOverlay.setAttribute('aria-hidden', 'false');
+  setTimeout(() => internetSearch.focus(), 100);
+}
+
+function closeInternetSearch() {
+  internetSearchOverlay.classList.remove('open');
+  internetSearchOverlay.setAttribute('aria-hidden', 'true');
+  internetSearch.value = '';
+  internetSearchResults.innerHTML = '<p>Start typing to explore lessons, reactions and trusted web sources.</p>';
+}
+
+function openProfile() {
+  profileOverlay.classList.add('open');
+  profileOverlay.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+  document.querySelector('.close-profile').focus();
+}
+
+function closeProfile() {
+  profileOverlay.classList.remove('open');
+  profileOverlay.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+}
+
+function localSearchMatches(term) {
+  const subjectMatches = subjects
+    .filter(subject => `${subject.title} ${subject.text} ${subject.tags.join(' ')}`.toLowerCase().includes(term))
+    .map(subject => ({ name: subject.title, detail: subject.text, kind: 'Study path', action: 'subject', subject: subject.title }));
+  const lessonMatches = subjects.flatMap(subject => getCourseLessons(subject)
+    .filter(lesson => `${lesson.title} ${lesson.description}`.toLowerCase().includes(term))
+    .map((lesson, index) => ({ name: lesson.title, detail: lesson.description, kind: `Lesson in ${subject.title}`, action: 'lesson', subject: subject.title, index })));
+  const reactionMatches = reactions
+    .filter(reaction => `${reaction.name} ${reaction.keywords} ${reaction.formula} ${reaction.explanation}`.toLowerCase().includes(term))
+    .map(reaction => ({ name: reaction.name, detail: reaction.formula, kind: 'Reaction', action: 'reaction', id: reaction.id }));
+  return [...subjectMatches, ...lessonMatches, ...reactionMatches].slice(0, 8);
+}
+
+function localResultMarkup(match) {
+  const attributes = match.action === 'lesson'
+    ? `data-library-action="lesson" data-subject="${escapeHTML(match.subject)}" data-index="${match.index}"`
+    : match.action === 'subject'
+      ? `data-library-action="subject" data-subject="${escapeHTML(match.subject)}"`
+      : `data-library-action="reaction" data-reaction-id="${match.id}"`;
+  return `<div class="result-row"><button type="button" ${attributes}><span><b>${escapeHTML(match.name)}</b><small>${escapeHTML(match.detail)}</small></span><em>${escapeHTML(match.kind)}</em></button></div>`;
+}
+
+function webResultMarkup(result) {
+  return `<div class="result-row"><a href="${escapeHTML(result.url)}" target="_blank" rel="noopener noreferrer"><span><b>${escapeHTML(result.name)}</b><small>${escapeHTML(result.detail)}</small></span><em>${escapeHTML(result.kind)}</em></a></div>`;
+}
+
+function renderInternetSearch(term, webResults = null) {
+  const localMatches = localSearchMatches(term);
+  const localMarkup = localMatches.length
+    ? `<p class="search-section-label">In Elemental</p>${localMatches.map(localResultMarkup).join('')}`
+    : '<p class="search-section-label">In Elemental</p><p>No library match yet - try the web results below.</p>';
+  let webMarkup = '<p class="search-section-label">Trusted web sources</p><p>Searching PubChem and Wikipedia...</p>';
+  if (webResults) {
+    webMarkup = webResults.length
+      ? `<p class="search-section-label">Trusted web sources</p>${webResults.map(webResultMarkup).join('')}`
+      : '<p class="search-section-label">Trusted web sources</p><p>No source result returned. Try the wider web search.</p>';
+  }
+  internetSearchResults.innerHTML = `${localMarkup}${webMarkup}<a class="web-search-link" href="${webSearchURL(term)}" target="_blank" rel="noopener noreferrer">Search the wider web for &ldquo;${escapeHTML(term)}&rdquo; <span>&rarr;</span></a>`;
+}
+
+async function searchChemistryWeb(term, requestNumber) {
+  const wikipediaURL = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(`${term} chemistry`)}&srlimit=4&format=json&origin=*`;
+  const pubChemURL = `https://pubchem.ncbi.nlm.nih.gov/rest/autocomplete/compound/${encodeURIComponent(term)}/json?limit=4`;
+  const [wikipediaResponse, pubChemResponse] = await Promise.allSettled([
+    fetch(wikipediaURL).then(response => response.ok ? response.json() : Promise.reject(new Error('Wikipedia unavailable'))),
+    fetch(pubChemURL).then(response => response.ok ? response.json() : Promise.reject(new Error('PubChem unavailable')))
+  ]);
+  if (requestNumber !== internetSearchRequest || internetSearch.value.trim().toLowerCase() !== term) return;
+  const wikipediaResults = wikipediaResponse.status === 'fulfilled'
+    ? (wikipediaResponse.value.query?.search || []).map(result => ({
+      name: result.title,
+      detail: result.snippet.replace(/<[^>]*>/g, ''),
+      kind: 'Wikipedia',
+      url: `https://en.wikipedia.org/wiki/${encodeURIComponent(result.title.replace(/ /g, '_'))}`
+    }))
+    : [];
+  const pubChemResults = pubChemResponse.status === 'fulfilled'
+    ? (pubChemResponse.value.dictionary_terms?.compound || []).map(name => ({
+      name,
+      detail: 'Compound and formula data',
+      kind: 'PubChem',
+      url: `https://pubchem.ncbi.nlm.nih.gov/#query=${encodeURIComponent(name)}`
+    }))
+    : [];
+  renderInternetSearch(term, [...pubChemResults, ...wikipediaResults].slice(0, 8));
+}
+
+document.querySelector('.search-toggle').addEventListener('click', openInternetSearch);
+document.querySelector('.close-internet-search').addEventListener('click', closeInternetSearch);
+internetSearchOverlay.addEventListener('click', event => { if (event.target === internetSearchOverlay) closeInternetSearch(); });
+document.querySelector('.profile-button').addEventListener('click', openProfile);
+document.querySelector('.close-profile').addEventListener('click', closeProfile);
+profileOverlay.addEventListener('click', event => { if (event.target === profileOverlay) closeProfile(); });
+document.querySelector('#profileContinue').addEventListener('click', () => { closeProfile(); openSubjectPath('Chemistry foundations'); });
+document.querySelector('#profileReaction').addEventListener('click', () => { closeProfile(); document.querySelector('#reactions').scrollIntoView({ behavior: 'smooth' }); document.querySelector('#randomReaction').click(); });
+document.querySelector('#profileSearch').addEventListener('click', () => { closeProfile(); openInternetSearch(); });
+
+internetSearch.addEventListener('input', event => {
+  const term = event.target.value.trim().toLowerCase();
+  clearTimeout(internetSearchTimer);
+  if (!term) {
+    internetSearchResults.innerHTML = '<p>Start typing to explore lessons, reactions and trusted web sources.</p>';
+    return;
+  }
+  renderInternetSearch(term);
+  const requestNumber = ++internetSearchRequest;
+  internetSearchTimer = setTimeout(() => searchChemistryWeb(term, requestNumber), 350);
+});
+
+internetSearchResults.addEventListener('click', event => {
+  const target = event.target.closest('[data-library-action]');
+  if (!target) return;
+  if (target.dataset.libraryAction === 'subject') {
+    closeInternetSearch();
+    openSubjectPath(target.dataset.subject);
+  } else if (target.dataset.libraryAction === 'lesson') {
+    closeInternetSearch();
+    openSubjectPath(target.dataset.subject);
+    openLesson(Number(target.dataset.index));
+  } else if (target.dataset.libraryAction === 'reaction') {
+    const reaction = reactions.find(item => item.id === Number(target.dataset.reactionId));
+    if (reaction) {
+      activeReaction = reaction;
+      document.querySelector('#reactions').scrollIntoView({ behavior: 'smooth' });
+      renderReactions();
+    }
+    closeInternetSearch();
+  }
+});
+
+document.addEventListener('keydown', event => { if (event.key === 'Escape') { closeInternetSearch(); closeProfile(); } });
+
 const overlay = document.querySelector('#searchOverlay'); const globalSearch = document.querySelector('#globalSearch'); const results = document.querySelector('#searchResults');
 function openSearch(){ overlay.classList.add('open'); overlay.setAttribute('aria-hidden','false'); setTimeout(() => globalSearch.focus(), 100); }
 function closeSearch(){ overlay.classList.remove('open'); overlay.setAttribute('aria-hidden','true'); globalSearch.value=''; results.innerHTML='<p>Start typing to explore lessons and reactions.</p>'; }

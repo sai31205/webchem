@@ -136,6 +136,26 @@
     <footer class="site-footer container"><a class="brand" href="#top"><span class="brand-mark"><i></i><i></i><i></i></span><span>elemental<span class="brand-dot">.</span></span></a><p>Built for the joy of figuring it out.</p><div><a href="#learn">Start here</a><a href="#reactions">Reactions</a><a href="#study-kit">Study kit</a></div></footer>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <div class="search-overlay" id="searchOverlay" aria-hidden="true"><div class="search-dialog"><button class="close-search" aria-label="Close search">×</button><p class="eyebrow"><span></span> find a topic</p><label><span>⌕</span><input id="globalSearch" type="search" placeholder="Try “stoichiometry” or “esters”" autofocus /></label><div id="searchResults" class="search-results"><p>Start typing to explore lessons and reactions.</p></div></div></div>
+    <div class="search-overlay" id="internetSearchOverlay" aria-hidden="true">
+      <section class="search-dialog" role="dialog" aria-modal="true" aria-labelledby="internetSearchTitle">
+        <button class="close-internet-search" aria-label="Close search">&times;</button>
+        <p class="eyebrow"><span></span> chemistry search</p>
+        <h2 id="internetSearchTitle">Search the chemistry web.</h2>
+        <p class="search-intro">Find a formula, reaction, compound or concept in this library, PubChem and Wikipedia.</p>
+        <label><span>&#8981;</span><input id="internetSearch" type="search" placeholder="Try H2SO4, stoichiometry or esters" autocomplete="off" autofocus /></label>
+        <p class="search-hint">Results appear as you type. Use the web link for a wider search.</p>
+        <div id="internetSearchResults" class="search-results"><p>Start typing to explore lessons, reactions and trusted web sources.</p></div>
+      </section>
+    </div>
+    <div class="profile-overlay" id="profileOverlay" aria-hidden="true">
+      <section class="profile-dialog" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
+        <button class="close-profile" aria-label="Close study profile">&times;</button>
+        <p class="eyebrow"><span></span> your study space</p>
+        <div class="profile-heading"><span class="profile-monogram">R</span><div><h2 id="profileTitle">Your chemistry desk.</h2><p>Pick up a learning path or explore a fresh reaction.</p></div></div>
+        <div class="profile-stats"><div><strong>12</strong><span>subjects</span></div><div><strong>126+</strong><span>lessons</span></div><div><strong>126+</strong><span>reactions</span></div></div>
+        <div class="profile-actions"><button id="profileContinue" class="button button-primary">Continue foundations <span>&rarr;</span></button><button id="profileReaction" class="button button-secondary">Explore a reaction <span>&rarr;</span></button><button id="profileSearch" class="profile-search-link">Search chemistry web <span>&rarr;</span></button></div>
+      </section>
+    </div>
     <script src="app.js"></script>
   </body>
 </html>

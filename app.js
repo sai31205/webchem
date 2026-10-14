@@ -636,6 +636,255 @@ internetSearchResults.addEventListener('click', event => {
 
 document.addEventListener('keydown', event => { if (event.key === 'Escape') { closeInternetSearch(); closeProfile(); } });
 
+function setupMoleculeRenderer() {
+  const canvas = document.querySelector('#moleculeRenderer');
+  const host = canvas?.closest('.hero-art');
+  const control = document.querySelector('#moleculeMotionToggle');
+  if (!canvas || !host || !window.requestAnimationFrame) return;
+  const context = canvas.getContext('2d');
+  if (!context) return;
+
+  const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+  const renderer = { width: 0, height: 0, pixelRatio: 1, running: !reducedMotion?.matches, elapsed: 0, lastFrame: 0, frame: 0, pointerX: 0, pointerY: 0, resumeAfterHidden: false };
+
+  function resizeRenderer() {
+    const bounds = host.getBoundingClientRect();
+    renderer.width = Math.max(1, bounds.width);
+    renderer.height = Math.max(1, bounds.height);
+    renderer.pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(renderer.width * renderer.pixelRatio);
+    canvas.height = Math.round(renderer.height * renderer.pixelRatio);
+    context.setTransform(renderer.pixelRatio, 0, 0, renderer.pixelRatio, 0, 0);
+    drawMolecule(renderer.elapsed);
+  }
+
+  function pointOnOrbit(angle, radiusX, radiusY, rotation, centerX, centerY) {
+    const orbitX = Math.cos(angle) * radiusX;
+    const orbitY = Math.sin(angle) * radiusY;
+    const cosRotation = Math.cos(rotation);
+    const sinRotation = Math.sin(rotation);
+    return { x: centerX + orbitX * cosRotation - orbitY * sinRotation, y: centerY + orbitX * sinRotation + orbitY * cosRotation };
+  }
+
+  function roundedRectangle(x, y, width, height, radius) {
+    const corner = Math.min(radius, width / 2, height / 2);
+    context.beginPath();
+    context.moveTo(x + corner, y);
+    context.arcTo(x + width, y, x + width, y + height, corner);
+    context.arcTo(x + width, y + height, x, y + height, corner);
+    context.arcTo(x, y + height, x, y, corner);
+    context.arcTo(x, y, x + width, y, corner);
+    context.closePath();
+  }
+
+  function drawOrbit(centerX, centerY, radiusX, radiusY, rotation, color, offset) {
+    context.save();
+    context.translate(centerX, centerY);
+    context.rotate(rotation);
+    context.beginPath();
+    context.ellipse(0, 0, radiusX, radiusY, 0, 0, Math.PI * 2);
+    context.setLineDash([2.5, 9]);
+    context.lineDashOffset = -offset;
+    context.lineWidth = 1;
+    context.strokeStyle = color;
+    context.stroke();
+    context.setLineDash([]);
+    context.restore();
+  }
+
+  function drawBond(from, to, progress) {
+    const gradient = context.createLinearGradient(from.x, from.y, to.x, to.y);
+    gradient.addColorStop(0, 'rgba(16,24,44,.10)');
+    gradient.addColorStop(.5, `rgba(251,112,95,${.19 + Math.sin(progress) * .06})`);
+    gradient.addColorStop(1, 'rgba(16,24,44,.08)');
+    context.save();
+    context.beginPath();
+    context.moveTo(from.x, from.y);
+    context.lineTo(to.x, to.y);
+    context.lineWidth = 1.2;
+    context.strokeStyle = gradient;
+    context.stroke();
+    context.restore();
+  }
+
+  function drawAtom(atom) {
+    const gradient = context.createRadialGradient(atom.x - atom.radius * .3, atom.y - atom.radius * .35, atom.radius * .1, atom.x, atom.y, atom.radius);
+    gradient.addColorStop(0, atom.highlight);
+    gradient.addColorStop(1, atom.color);
+    context.save();
+    context.shadowColor = 'rgba(16,24,44,.17)';
+    context.shadowBlur = atom.radius * .35;
+    context.shadowOffsetY = atom.radius * .13;
+    context.fillStyle = gradient;
+    context.beginPath();
+    context.arc(atom.x, atom.y, atom.radius, 0, Math.PI * 2);
+    context.fill();
+    context.shadowColor = 'transparent';
+    context.fillStyle = 'rgba(16,24,44,.62)';
+    context.font = `${Math.max(9, atom.radius * .19)}px "DM Mono", monospace`;
+    context.textAlign = 'left';
+    context.textBaseline = 'alphabetic';
+    context.fillText(atom.number, atom.x - atom.radius * .5, atom.y - atom.radius * .38);
+    context.fillStyle = '#10182c';
+    context.font = `${Math.max(20, atom.radius * .76)}px Georgia, serif`;
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillText(atom.symbol, atom.x, atom.y + atom.radius * .04);
+    context.restore();
+  }
+
+  function drawLabel(x, y, text, accent) {
+    context.save();
+    context.font = '9px "DM Mono", monospace';
+    const width = context.measureText(text).width + 25;
+    const height = 31;
+    roundedRectangle(x, y, width, height, 0);
+    context.fillStyle = 'rgba(255,253,249,.82)';
+    context.fill();
+    context.strokeStyle = 'rgba(16,24,44,.09)';
+    context.stroke();
+    context.fillStyle = '#5d6571';
+    context.textAlign = 'left';
+    context.textBaseline = 'middle';
+    context.fillText(text, x + 11, y + height / 2 + .5);
+    if (accent) {
+      context.fillStyle = '#fb705f';
+      context.font = '14px Georgia, serif';
+      context.textAlign = 'right';
+      context.fillText('->', x + width - 9, y + height / 2 + .5);
+    }
+    context.restore();
+  }
+
+  function drawElectron(point, size, color) {
+    context.save();
+    context.fillStyle = color;
+    context.shadowColor = color;
+    context.shadowBlur = 10;
+    context.beginPath();
+    context.arc(point.x, point.y, size, 0, Math.PI * 2);
+    context.fill();
+    context.restore();
+  }
+
+  function drawMolecule(elapsed) {
+    const { width, height } = renderer;
+    const unit = Math.min(width, height);
+    const centerX = width * .51 + renderer.pointerX * unit * .035;
+    const centerY = height * .5 + renderer.pointerY * unit * .028;
+    context.clearRect(0, 0, width, height);
+
+    const halo = context.createRadialGradient(centerX, centerY, unit * .04, centerX, centerY, unit * .49);
+    halo.addColorStop(0, 'rgba(255,252,245,.73)');
+    halo.addColorStop(.53, 'rgba(246,222,188,.34)');
+    halo.addColorStop(1, 'rgba(246,222,188,0)');
+    context.fillStyle = halo;
+    context.beginPath();
+    context.ellipse(centerX, centerY, unit * .53, unit * .45, -.13, 0, Math.PI * 2);
+    context.fill();
+
+    const orbitShift = elapsed * 18;
+    drawOrbit(centerX, centerY, unit * .41, unit * .29, -.56 + renderer.pointerX * .05, 'rgba(16,24,44,.25)', orbitShift);
+    drawOrbit(centerX, centerY, unit * .36, unit * .31, .48 + renderer.pointerY * .04, 'rgba(251,112,95,.55)', orbitShift * 1.2);
+    drawOrbit(centerX, centerY, unit * .43, unit * .14, 1.5, 'rgba(16,24,44,.15)', orbitShift * .8);
+
+    const carbon = pointOnOrbit(elapsed * .29 + 3.86, unit * .39, unit * .27, -.46, centerX, centerY);
+    const hydrogen = pointOnOrbit(elapsed * .42 + 5.53, unit * .44, unit * .3, -.46, centerX, centerY);
+    const nitrogen = pointOnOrbit(elapsed * .34 + 1.35, unit * .4, unit * .3, -.46, centerX, centerY);
+    const oxygen = { x: centerX, y: centerY, radius: unit * .177, color: '#9ddbcc', highlight: '#d4f0e8', number: '8', symbol: 'O' };
+    const atoms = [
+      { ...oxygen },
+      { ...carbon, radius: unit * .112, color: '#fb705f', highlight: '#ffad99', number: '6', symbol: 'C' },
+      { ...hydrogen, radius: unit * .08, color: '#dff1e9', highlight: '#ffffff', number: '1', symbol: 'H' },
+      { ...nitrogen, radius: unit * .1, color: '#f5c456', highlight: '#ffe6a0', number: '7', symbol: 'N' }
+    ];
+
+    atoms.slice(1).forEach((atom, index) => {
+      const dx = atom.x - oxygen.x;
+      const dy = atom.y - oxygen.y;
+      const length = Math.hypot(dx, dy) || 1;
+      const start = { x: oxygen.x + dx / length * oxygen.radius * .63, y: oxygen.y + dy / length * oxygen.radius * .63 };
+      const end = { x: atom.x - dx / length * atom.radius * .7, y: atom.y - dy / length * atom.radius * .7 };
+      drawBond(start, end, elapsed * 2 + index);
+    });
+
+    const electronTracks = [
+      { angle: elapsed * 1.25 + .15, rx: unit * .41, ry: unit * .29, rotation: -.56, color: '#fb705f' },
+      { angle: elapsed * 1.58 + 2.3, rx: unit * .36, ry: unit * .31, rotation: .48, color: '#9ddbcc' },
+      { angle: elapsed * 1.05 + 4.15, rx: unit * .43, ry: unit * .14, rotation: 1.5, color: '#f5c456' }
+    ];
+    electronTracks.forEach((track, index) => {
+      for (let trail = 4; trail > 0; trail -= 1) {
+        const trailPoint = pointOnOrbit(track.angle - trail * .09, track.rx, track.ry, track.rotation, centerX, centerY);
+        drawElectron(trailPoint, unit * (.005 + (4 - trail) * .001), `${track.color}${Math.round((.1 + (4 - trail) * .06) * 255).toString(16).padStart(2, '0')}`);
+      }
+      drawElectron(pointOnOrbit(track.angle, track.rx, track.ry, track.rotation, centerX, centerY), unit * .012, track.color);
+    });
+
+    for (let spark = 0; spark < 7; spark += 1) {
+      const angle = elapsed * (.16 + spark * .012) + spark * 1.73;
+      const radius = unit * (.37 + (spark % 3) * .055);
+      const x = centerX + Math.cos(angle) * radius;
+      const y = centerY + Math.sin(angle * 1.26) * radius * .67;
+      const pulse = .45 + Math.sin(elapsed * 2.1 + spark) * .24;
+      context.save();
+      context.globalAlpha = pulse;
+      context.fillStyle = spark % 2 ? '#fb705f' : '#f5c456';
+      context.fillRect(x - 1, y - 1, 2, 2);
+      context.restore();
+    }
+
+    atoms.forEach(drawAtom);
+    drawLabel(Math.max(8, width - unit * .34), centerY + unit * .12, 'Covalent bond', true);
+    drawLabel(Math.max(8, unit * .015), Math.min(height - 38, centerY + unit * .35), 'atomic no. 08', false);
+  }
+
+  function updateMotionButton() {
+    if (!control) return;
+    control.textContent = renderer.running ? 'Pause motion' : 'Resume motion';
+    control.setAttribute('aria-pressed', String(renderer.running));
+  }
+
+  function renderFrame(timestamp) {
+    if (renderer.lastFrame) renderer.elapsed += Math.min((timestamp - renderer.lastFrame) / 1000, .05);
+    renderer.lastFrame = timestamp;
+    drawMolecule(renderer.elapsed);
+    if (renderer.running) renderer.frame = window.requestAnimationFrame(renderFrame);
+  }
+
+  function setRendererRunning(shouldRun) {
+    renderer.running = shouldRun;
+    window.cancelAnimationFrame(renderer.frame);
+    renderer.lastFrame = 0;
+    updateMotionButton();
+    if (renderer.running) renderer.frame = window.requestAnimationFrame(renderFrame);
+    else drawMolecule(renderer.elapsed);
+  }
+
+  host.classList.add('is-rendered');
+  resizeRenderer();
+  new ResizeObserver(resizeRenderer).observe(host);
+  host.addEventListener('pointermove', event => {
+    const bounds = host.getBoundingClientRect();
+    renderer.pointerX = (event.clientX - bounds.left) / bounds.width - .5;
+    renderer.pointerY = (event.clientY - bounds.top) / bounds.height - .5;
+  });
+  host.addEventListener('pointerleave', () => { renderer.pointerX = 0; renderer.pointerY = 0; });
+  control?.addEventListener('click', () => setRendererRunning(!renderer.running));
+  reducedMotion?.addEventListener?.('change', event => { if (event.matches) setRendererRunning(false); });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      renderer.resumeAfterHidden = renderer.running;
+      setRendererRunning(false);
+    } else if (renderer.resumeAfterHidden && !reducedMotion?.matches) {
+      setRendererRunning(true);
+    }
+  });
+  setRendererRunning(renderer.running);
+}
+
+setupMoleculeRenderer();
+
 const overlay = document.querySelector('#searchOverlay'); const globalSearch = document.querySelector('#globalSearch'); const results = document.querySelector('#searchResults');
 function openSearch(){ overlay.classList.add('open'); overlay.setAttribute('aria-hidden','false'); setTimeout(() => globalSearch.focus(), 100); }
 function closeSearch(){ overlay.classList.remove('open'); overlay.setAttribute('aria-hidden','true'); globalSearch.value=''; results.innerHTML='<p>Start typing to explore lessons and reactions.</p>'; }

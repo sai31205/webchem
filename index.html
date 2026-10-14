@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css?v=20260929-profile-search" />
+    <link rel="stylesheet" href="styles.css?v=20261014-molecule-renderer" />
   </head>
   <body>
     <div class="page-glow glow-one"></div>
@@ -45,7 +45,9 @@
             <span>Join <strong>28,000+</strong> curious minds</span>
           </div>
         </div>
-        <div class="hero-art" aria-label="Molecular illustration">
+        <div class="hero-art" aria-label="Live molecular illustration">
+          <canvas class="molecule-canvas" id="moleculeRenderer" aria-hidden="true"></canvas>
+          <div class="renderer-ui"><p><span></span> live molecular renderer</p><button id="moleculeMotionToggle" type="button" aria-pressed="true">Pause motion</button></div>
           <div class="orbit orbit-a"></div><div class="orbit orbit-b"></div><div class="orbit orbit-c"></div>
           <div class="atom atom-main"><span>8</span><small>O</small></div>
           <div class="atom atom-coral"><span>6</span><small>C</small></div>
@@ -156,6 +158,6 @@
         <div class="profile-actions"><button id="profileContinue" class="button button-primary">Continue foundations <span>&rarr;</span></button><button id="profileReaction" class="button button-secondary">Explore a reaction <span>&rarr;</span></button><button id="profileSearch" class="profile-search-link">Search chemistry web <span>&rarr;</span></button></div>
       </section>
     </div>
-    <script src="app.js?v=20260929-profile-search-2"></script>
+    <script src="app.js?v=20261014-molecule-renderer"></script>
   </body>
 </html>

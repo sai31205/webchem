@@ -497,7 +497,8 @@ function webSearchURL(term) {
   return `https://www.google.com/search?q=${encodeURIComponent(`${term} chemistry`)}`;
 }
 
-function openInternetSearch() {
+function openInternetSearch(event) {
+  event?.stopImmediatePropagation();
   internetSearchOverlay.classList.add('open');
   internetSearchOverlay.setAttribute('aria-hidden', 'false');
   setTimeout(() => internetSearch.focus(), 100);

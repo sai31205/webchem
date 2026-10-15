@@ -96,7 +96,7 @@
             </div>
         </div>
 
-        <a href="http://localhost:5000/api" class="api-link" target="_blank">
+        <a href="https://webchem-production.up.railway.app/api" class="api-link" target="_blank">
             View API Documentation
         </a>
 
@@ -107,7 +107,7 @@
 
     <script>
         // Check backend health
-        fetch('http://localhost:5000/health')
+        fetch('https://webchem-production.up.railway.app/health')
             .then(res => res.json())
             .then(data => {
                 document.getElementById('status').innerHTML = '✅ Backend is running!';

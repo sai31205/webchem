@@ -486,8 +486,125 @@ const internetSearchOverlay = document.querySelector('#internetSearchOverlay');
 const internetSearch = document.querySelector('#internetSearch');
 const internetSearchResults = document.querySelector('#internetSearchResults');
 const profileOverlay = document.querySelector('#profileOverlay');
+const authOverlay = document.querySelector('#authOverlay');
+const accountButton = document.querySelector('#accountButton');
+const accountButtonMark = document.querySelector('#accountButtonMark');
+const accountButtonLabel = document.querySelector('#accountButtonLabel');
+const authForm = document.querySelector('#authForm');
+const authNameGroup = document.querySelector('#authNameGroup');
+const authName = document.querySelector('#authName');
+const authEmail = document.querySelector('#authEmail');
+const authPasscode = document.querySelector('#authPasscode');
+const authTitle = document.querySelector('#authTitle');
+const authCopy = document.querySelector('#authCopy');
+const authStatus = document.querySelector('#authStatus');
+const authSubmit = document.querySelector('#authSubmit');
+const signUpTab = document.querySelector('#signUpTab');
+const signInTab = document.querySelector('#signInTab');
+const profileMonogram = document.querySelector('#profileMonogram');
+const profileTitle = document.querySelector('#profileTitle');
+const profileIntro = document.querySelector('#profileIntro');
+const profileEmail = document.querySelector('#profileEmail');
+const LOCAL_ACCOUNT_KEY = 'elemental-local-account-v1';
+const LOCAL_SESSION_KEY = 'elemental-local-session-v1';
 let internetSearchTimer;
 let internetSearchRequest = 0;
+let authMode = 'signup';
+
+function readLocalAccount() {
+  try {
+    const account = JSON.parse(localStorage.getItem(LOCAL_ACCOUNT_KEY) || 'null');
+    return account && account.name && account.email && account.passcodeHash ? account : null;
+  } catch {
+    return null;
+  }
+}
+
+function readActiveAccount() {
+  try {
+    const account = readLocalAccount();
+    const session = JSON.parse(localStorage.getItem(LOCAL_SESSION_KEY) || 'null');
+    return account && session?.email === account.email ? account : null;
+  } catch {
+    return null;
+  }
+}
+
+let currentAccount = readActiveAccount();
+
+function accountFirstName(name) {
+  return String(name || '').trim().split(/\s+/)[0] || 'chemist';
+}
+
+function accountInitial(name) {
+  return accountFirstName(name).charAt(0).toUpperCase() || 'R';
+}
+
+function writeActiveSession(account) {
+  localStorage.setItem(LOCAL_SESSION_KEY, JSON.stringify({ email: account.email, signedInAt: new Date().toISOString() }));
+}
+
+async function createPasscodeHash(passcode) {
+  const value = String(passcode);
+  if (globalThis.crypto?.subtle) {
+    const buffer = await globalThis.crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
+    return `sha256:${Array.from(new Uint8Array(buffer), byte => byte.toString(16).padStart(2, '0')).join('')}`;
+  }
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) hash = Math.imul(hash ^ value.charCodeAt(index), 16777619);
+  return `local:${hash >>> 0}`;
+}
+
+function setAuthStatus(message = '', type = '') {
+  authStatus.textContent = message;
+  authStatus.classList.toggle('success', type === 'success');
+}
+
+function updateAccountInterface() {
+  const signedIn = Boolean(currentAccount);
+  const firstName = signedIn ? accountFirstName(currentAccount.name) : '';
+  accountButton.classList.toggle('is-signed-in', signedIn);
+  accountButton.classList.toggle('is-guest', !signedIn);
+  accountButtonMark.textContent = signedIn ? accountInitial(currentAccount.name) : 'R';
+  accountButtonLabel.textContent = signedIn ? 'Account' : 'Sign in';
+  accountButton.setAttribute('aria-label', signedIn ? `Open account for ${firstName}` : 'Sign in or create an account');
+  profileMonogram.textContent = signedIn ? accountInitial(currentAccount.name) : 'R';
+  profileTitle.textContent = signedIn ? `Welcome back, ${firstName}.` : 'Your chemistry desk.';
+  profileIntro.textContent = signedIn ? 'Your local study space is ready for the next idea.' : 'Pick up a learning path or explore a fresh reaction.';
+  profileEmail.textContent = signedIn ? currentAccount.email : '';
+}
+
+function setAuthMode(mode) {
+  authMode = mode;
+  const isSignUp = mode === 'signup';
+  signUpTab.setAttribute('aria-selected', String(isSignUp));
+  signInTab.setAttribute('aria-selected', String(!isSignUp));
+  authNameGroup.hidden = !isSignUp;
+  authName.required = isSignUp;
+  authPasscode.autocomplete = isSignUp ? 'new-password' : 'current-password';
+  authTitle.textContent = isSignUp ? 'Make this your chemistry desk.' : 'Welcome back to Elemental.';
+  authCopy.textContent = isSignUp
+    ? 'Create a local study account to save this browser as your learning space.'
+    : 'Sign in to the learning space you made on this browser.';
+  authSubmit.innerHTML = isSignUp ? 'Create my account <span>&rarr;</span>' : 'Sign in to my desk <span>&rarr;</span>';
+  setAuthStatus();
+}
+
+function openAuth(mode = 'signup') {
+  setAuthMode(mode);
+  authOverlay.classList.add('open');
+  authOverlay.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => (mode === 'signup' ? authName : authEmail).focus(), 80);
+}
+
+function closeAuth() {
+  authOverlay.classList.remove('open');
+  authOverlay.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+  authForm.reset();
+  setAuthStatus();
+}
 
 function escapeHTML(value) {
   return String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
@@ -512,6 +629,10 @@ function closeInternetSearch() {
 }
 
 function openProfile() {
+  if (!currentAccount) {
+    openAuth('signup');
+    return;
+  }
   profileOverlay.classList.add('open');
   profileOverlay.setAttribute('aria-hidden', 'false');
   document.body.style.overflow = 'hidden';
@@ -594,12 +715,75 @@ async function searchChemistryWeb(term, requestNumber) {
 document.querySelector('.search-toggle').addEventListener('click', openInternetSearch);
 document.querySelector('.close-internet-search').addEventListener('click', closeInternetSearch);
 internetSearchOverlay.addEventListener('click', event => { if (event.target === internetSearchOverlay) closeInternetSearch(); });
-document.querySelector('.profile-button').addEventListener('click', openProfile);
+updateAccountInterface();
+accountButton.addEventListener('click', () => { if (currentAccount) openProfile(); else openAuth('signup'); });
 document.querySelector('.close-profile').addEventListener('click', closeProfile);
 profileOverlay.addEventListener('click', event => { if (event.target === profileOverlay) closeProfile(); });
 document.querySelector('#profileContinue').addEventListener('click', () => { closeProfile(); openSubjectPath('Chemistry foundations'); });
 document.querySelector('#profileReaction').addEventListener('click', () => { closeProfile(); document.querySelector('#reactions').scrollIntoView({ behavior: 'smooth' }); document.querySelector('#randomReaction').click(); });
 document.querySelector('#profileSearch').addEventListener('click', () => { closeProfile(); openInternetSearch(); });
+document.querySelector('#profileSignOut').addEventListener('click', () => {
+  localStorage.removeItem(LOCAL_SESSION_KEY);
+  currentAccount = null;
+  updateAccountInterface();
+  closeProfile();
+  showToast('Signed out on this browser. Your local demo account is still available to sign in again.');
+});
+document.querySelector('#authClose').addEventListener('click', closeAuth);
+authOverlay.addEventListener('click', event => { if (event.target === authOverlay) closeAuth(); });
+signUpTab.addEventListener('click', () => setAuthMode('signup'));
+signInTab.addEventListener('click', () => setAuthMode('signin'));
+authForm.addEventListener('submit', async event => {
+  event.preventDefault();
+  const email = authEmail.value.trim().toLowerCase();
+  const passcode = authPasscode.value;
+  const name = authName.value.trim();
+  if (!email || !passcode || (authMode === 'signup' && !name)) {
+    setAuthStatus('Complete every field to continue.');
+    return;
+  }
+  authSubmit.disabled = true;
+  try {
+    const savedAccount = readLocalAccount();
+    const passcodeHash = await createPasscodeHash(passcode);
+    if (authMode === 'signup') {
+      if (savedAccount) {
+        setAuthMode('signin');
+        authEmail.value = email;
+        setAuthStatus('One local demo account already exists in this browser. Sign in instead.');
+        return;
+      }
+      const account = { name, email, passcodeHash, createdAt: new Date().toISOString(), version: 1 };
+      localStorage.setItem(LOCAL_ACCOUNT_KEY, JSON.stringify(account));
+      writeActiveSession(account);
+      currentAccount = account;
+      updateAccountInterface();
+      closeAuth();
+      openProfile();
+      showToast(`Welcome, ${accountFirstName(name)}. Your local chemistry desk is ready.`);
+      return;
+    }
+    if (!savedAccount) {
+      setAuthStatus('No local account was found on this browser. Create one first.');
+      return;
+    }
+    if (savedAccount.email !== email || savedAccount.passcodeHash !== passcodeHash) {
+      setAuthStatus('That email or practice passcode does not match this local account.');
+      return;
+    }
+    writeActiveSession(savedAccount);
+    currentAccount = savedAccount;
+    updateAccountInterface();
+    closeAuth();
+    openProfile();
+    showToast(`Welcome back, ${accountFirstName(savedAccount.name)}.`);
+  } catch {
+    setAuthStatus('This browser could not save the local account. Please try again.');
+  } finally {
+    authSubmit.disabled = false;
+  }
+});
+document.addEventListener('keydown', event => { if (event.key === 'Escape') { closeAuth(); closeProfile(); } });
 
 internetSearch.addEventListener('input', event => {
   const term = event.target.value.trim().toLowerCase();

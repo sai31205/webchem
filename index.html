@@ -97,7 +97,7 @@
         </div>
 
         <a href="https://webchem-production.up.railway.app/api" class="api-link" target="_blank">
-            View API Documentation
+            API Documentation
         </a>
 
         <p style="margin-top: 30px; font-size: 0.9em; opacity: 0.7;">
@@ -110,11 +110,11 @@
         fetch('https://webchem-production.up.railway.app/health')
             .then(res => res.json())
             .then(data => {
-                document.getElementById('status').innerHTML = '✅ Backend is running!';
+                document.getElementById('status').innerHTML = '✅ OPENING!';
                 document.getElementById('status').style.background = 'rgba(76, 175, 80, 0.3)';
             })
             .catch(err => {
-                document.getElementById('status').innerHTML = '❌ Backend not running';
+                document.getElementById('status').innerHTML = '❌ 404';
                 document.getElementById('status').style.background = 'rgba(244, 67, 54, 0.3)';
             });
     </script>

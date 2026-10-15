@@ -1,0 +1,34 @@
+{
+  "name": "webchem",
+  "version": "2.0.0",
+  "description": "Complete chemistry learning platform with interactive tools, 3D visualization, virtual lab, and AI tutor",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "nodemon backend/server.js",
+    "test": "echo \"Tests coming soon\" && exit 0"
+  },
+  "keywords": ["chemistry", "education", "learning", "science"],
+  "author": "smrutiranjandev0p",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "mongoose": "^7.6.3",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "dotenv": "^16.3.1",
+    "cors": "^2.8.5",
+    "helmet": "^7.0.0",
+    "morgan": "^1.10.0",
+    "compression": "^1.7.4",
+    "cookie-parser": "^1.4.6",
+    "express-rate-limit": "^7.1.1",
+    "express-validator": "^7.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

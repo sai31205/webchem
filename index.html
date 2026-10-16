@@ -1,122 +1,151 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebChem - Chemistry Learning Platform</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-        }
-        .container {
-            text-align: center;
-            padding: 40px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            max-width: 600px;
-        }
-        h1 { font-size: 3em; margin-bottom: 20px; }
-        .emoji { font-size: 4em; margin-bottom: 20px; }
-        p { font-size: 1.2em; margin-bottom: 30px; opacity: 0.9; }
-        .status {
-            display: inline-block;
-            padding: 10px 20px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 25px;
-            margin: 10px 0;
-        }
-        .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-top: 30px;
-        }
-        .feature {
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-        }
-        .api-link {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 12px 30px;
-            background: white;
-            color: #667eea;
-            text-decoration: none;
-            border-radius: 25px;
-            font-weight: 600;
-            transition: transform 0.2s;
-        }
-        .api-link:hover { transform: scale(1.05); }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WebChem — Chemistry Learning Platform</title>
+<style>
+:root{--ink:#fff;--muted:#e9e9ff;--glass:rgba(255,255,255,.12);--line:rgba(255,255,255,.2)}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;padding:24px 14px;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:linear-gradient(135deg,#667eea,#764ba2);display:flex;justify-content:center;align-items:center}
+.container{width:min(100%,650px);padding:clamp(20px,5vw,42px);text-align:center;background:rgba(255,255,255,.12);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:24px;box-shadow:0 12px 40px #24195b22}
+.emoji{font-size:3.6rem}h1{font-size:clamp(2.5rem,9vw,4rem);margin:8px 0 16px} .subtitle{font-size:clamp(1rem,4vw,1.35rem);margin:0 0 24px;color:#f5f4ff}
+.status{display:inline-block;padding:10px 18px;background:var(--glass);border-radius:25px;margin:8px 0 16px;font-size:.95rem}
+.features{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:22px}
+.feature{font:inherit;color:white;border:1px solid transparent;cursor:pointer;padding:17px 8px;background:rgba(255,255,255,.12);border-radius:14px;min-height:110px;transition:background .2s,transform .2s}
+.feature:hover,.feature:focus-visible{background:rgba(255,255,255,.23);transform:translateY(-2px);outline:2px solid white}
+.feature .icon{font-size:2rem;display:block;margin-bottom:4px}.feature span:last-child{font-size:1.05rem}
+.api-link{display:inline-block;margin-top:22px;padding:13px 28px;background:white;color:#667eea;text-decoration:none;border-radius:28px;font-weight:650}
+.note{margin:22px 0 0;font-size:.9rem;color:#e4e2ff;overflow-wrap:anywhere}
+.panel{display:none;text-align:left;margin-top:20px;padding:20px;background:rgba(30,25,90,.25);border:1px solid var(--line);border-radius:16px}
+.panel.active{display:block}.panel h2{margin:0 0 14px;font-size:1.4rem}.panel p{line-height:1.5}.panel label{display:block;margin:10px 0 5px;font-size:.93rem}
+input,select{width:100%;padding:12px;border-radius:9px;border:1px solid #ddd;font:inherit;margin-bottom:7px;background:#fff;color:#222}
+.action{padding:11px 15px;border:0;border-radius:9px;background:#fff;color:#5147a5;font:inherit;font-weight:650;cursor:pointer;margin:5px 5px 5px 0}
+.secondary{background:rgba(255,255,255,.15);border:1px solid var(--line);color:#fff}
+.result{margin-top:12px;padding:12px;border-radius:9px;background:rgba(0,0,0,.15);white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5}
+.small{font-size:.85rem;color:#eceaff}.hidden{display:none!important}
+@media(min-width:520px){.features{gap:14px}.feature{min-height:120px}}
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="emoji">🧪</div>
-        <h1>WebChem</h1>
-        <p>Complete Chemistry Learning Platform</p>
+<main class="container">
+  <div class="emoji">🧪</div>
+  <h1>WebChem</h1>
+  <p class="subtitle">Complete Chemistry Learning Platform</p>
+  <div class="status" id="status" role="status">🔄 Checking backend…</div>
 
-        <div class="status" id="status">
-            🔄 Checking backend status...
-        </div>
+  <div class="features" aria-label="WebChem features">
+    <button class="feature" data-panel="auth"><span class="icon">🔐</span><span>Authentication</span></button>
+    <button class="feature" data-panel="lessons"><span class="icon">📚</span><span>Lessons</span></button>
+    <button class="feature" data-panel="progress"><span class="icon">📊</span><span>Progress</span></button>
+    <button class="feature" data-panel="reactions"><span class="icon">⚗️</span><span>Reactions</span></button>
+    <button class="feature" data-panel="calculators"><span class="icon">🧮</span><span>Calculators</span></button>
+    <button class="feature" data-panel="achievements"><span class="icon">🏆</span><span>Achievements</span></button>
+  </div>
 
-        <div class="features">
-            <div class="feature">
-                <div style="font-size: 2em;">🔐</div>
-                <div>Authentication</div>
-            </div>
-            <div class="feature">
-                <div style="font-size: 2em;">📚</div>
-                <div>Lessons</div>
-            </div>
-            <div class="feature">
-                <div style="font-size: 2em;">📊</div>
-                <div>Progress</div>
-            </div>
-            <div class="feature">
-                <div style="font-size: 2em;">⚗️</div>
-                <div>Reactions</div>
-            </div>
-            <div class="feature">
-                <div style="font-size: 2em;">🧮</div>
-                <div>Calculators</div>
-            </div>
-            <div class="feature">
-                <div style="font-size: 2em;">🏆</div>
-                <div>Achievements</div>
-            </div>
-        </div>
+  <section class="panel" id="auth">
+    <h2>🔐 Account</h2>
+    <p class="small">Create an account or sign in. Your session token is stored only in this browser.</p>
+    <label for="authMode">Action</label><select id="authMode"><option value="login">Login</option><option value="register">Create account</option></select>
+    <div id="usernameWrap" class="hidden"><label for="username">Username</label><input id="username" autocomplete="username" placeholder="Your username"></div>
+    <label for="email">Email</label><input id="email" type="email" autocomplete="email" placeholder="you@example.com">
+    <label for="password">Password</label><input id="password" type="password" autocomplete="current-password" placeholder="At least 6 characters">
+    <button class="action" id="authSubmit">Continue</button><button class="action secondary" id="logout">Logout</button>
+    <div class="result" id="authResult" aria-live="polite">Not signed in.</div>
+  </section>
 
-        <a href="https://webchem-production.up.railway.app/api" class="api-link" target="_blank">
-            API Documentation
-        </a>
+  <section class="panel" id="lessons"><h2>📚 Lessons</h2><p>Loads lessons from the WebChem API.</p><button class="action" id="loadLessons">Load lessons</button><div class="result" id="lessonsResult">Tap “Load lessons”.</div></section>
+  <section class="panel" id="progress"><h2>📊 Learning progress</h2><p>Your progress requires you to sign in first.</p><button class="action" id="loadProgress">Load progress</button><div class="result" id="progressResult">Sign in, then load your progress.</div></section>
+  <section class="panel" id="reactions"><h2>⚗️ Chemical reactions</h2><button class="action" id="loadReactions">Load reactions</button><div class="result" id="reactionsResult">Tap “Load reactions”.</div></section>
+  <section class="panel" id="calculators">
+    <h2>🧮 Chemistry calculators</h2>
+    <label for="formula">Molar mass — chemical formula</label><input id="formula" placeholder="e.g. H2O, NaCl, H2SO4">
+    <button class="action" id="molarMass">Calculate molar mass</button><div class="result" id="massResult">Enter a formula to calculate its molar mass.</div>
+    <label for="phConc">Approximate pH — concentration in mol/L</label><input id="phConc" type="number" min="0" step="any" placeholder="e.g. 0.01">
+    <label for="phType">Solution type (strong acid/base approximation)</label><select id="phType"><option value="acid">Strong acid</option><option value="base">Strong base</option></select>
+    <button class="action" id="calcPH">Calculate pH</button><div class="result" id="phResult">For strong monoprotic acids/bases only; this is an approximation.</div>
+    <p class="small">Molar mass supports standard element symbols and parentheses (e.g. Ca(OH)2). Hydrates using a dot are not supported.</p>
+  </section>
+  <section class="panel" id="achievements"><h2>🏆 Achievements</h2><p>Achievement tracking is not implemented in the current backend yet.</p><div class="result">This feature needs backend data models and routes before real achievements can be displayed.</div></section>
 
-        <p style="margin-top: 30px; font-size: 0.9em; opacity: 0.7;">
-            Backend: <code>npm install && npm run dev</code>
-        </p>
-    </div>
+  <a class="api-link" href="https://webchem-production.up.railway.app/api" target="_blank" rel="noopener noreferrer">API Documentation</a>
+  <p class="note">WebChem frontend · Backend API: webchem-production.up.railway.app</p>
+</main>
+<script>
+const API = 'https://webchem-production.up.railway.app';
+const $ = id => document.getElementById(id);
+let token = '';
+document.querySelectorAll('[data-panel]').forEach(btn => btn.addEventListener('click', () => {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  $(btn.dataset.panel).classList.add('active');
+  $(btn.dataset.panel).scrollIntoView({behavior:'smooth',block:'nearest'});
+}));
+$('authMode').addEventListener('change', () => {
+  $('usernameWrap').classList.toggle('hidden', $('authMode').value !== 'register');
+  $('authSubmit').textContent = $('authMode').value === 'register' ? 'Create account' : 'Login';
+});
+async function api(path, options={}) {
+  const headers = {'Content-Type':'application/json', ...(options.headers||{})};
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const res = await fetch(API + path, {...options, headers});
+  let data; try { data = await res.json(); } catch { data = {error:`Server returned HTTP ${res.status}`}; }
+  if (!res.ok) throw new Error(data.error || data.message || `Request failed (${res.status})`);
+  return data;
+}
+(async()=>{try{await api('/health');$('status').textContent='✅ Backend connected';}catch(e){$('status').textContent='⚠️ Backend unavailable — local calculators still work';}})();
 
-    <script>
-        // Check backend health
-        fetch('https://webchem-production.up.railway.app/health')
-            .then(res => res.json())
-            .then(data => {
-                document.getElementById('status').innerHTML = '✅ OPENING!';
-                document.getElementById('status').style.background = 'rgba(76, 175, 80, 0.3)';
-            })
-            .catch(err => {
-                document.getElementById('status').innerHTML = '❌ 404';
-                document.getElementById('status').style.background = 'rgba(244, 67, 54, 0.3)';
-            });
-    </script>
+$('authSubmit').addEventListener('click', async()=>{
+  const mode=$('authMode').value, email=$('email').value.trim(), password=$('password').value;
+  if(!email||!password||(mode==='register'&&!$('username').value.trim())){$('authResult').textContent='Please fill in all required fields.';return;}
+  $('authResult').textContent='Connecting…';
+  try {
+    const body={email,password}; if(mode==='register') body.username=$('username').value.trim();
+    const data=await api('/api/auth/'+(mode==='register'?'register':'login'),{method:'POST',body:JSON.stringify(body)});
+    token=data.token||''; $('authResult').textContent=token?'Signed in successfully as '+(data.user?.username||data.user?.email||email)+'.':'Request completed, but no token was returned.';
+  } catch(e){$('authResult').textContent='Could not sign in: '+e.message+'. Check that the backend is deployed and its database is connected.';}
+});
+$('logout').addEventListener('click',()=>{token='';$('authResult').textContent='Signed out. Reloading the page also clears this temporary session.';});
+async function loadList(path,target,key){
+  $(target).textContent='Loading…';
+  try {const data=await api(path);const items=data[key]||[];$(target).textContent=items.length?JSON.stringify(items,null,2):(data.message||'The API is reachable, but no content has been added yet.');}
+  catch(e){$(target).textContent='Unable to load: '+e.message+'.';}
+}
+$('loadLessons').addEventListener('click',()=>loadList('/api/lessons','lessonsResult','lessons'));
+$('loadReactions').addEventListener('click',()=>loadList('/api/reactions','reactionsResult','reactions'));
+$('loadProgress').addEventListener('click',async()=>{
+  $('progressResult').textContent='Loading…';
+  try{if(!token)throw new Error('Please sign in using Authentication first');const data=await api('/api/progress');$('progressResult').textContent=JSON.stringify(data.progress||data,null,2);}
+  catch(e){$('progressResult').textContent=e.message+'.';}
+});
+
+// Formula parser: elements, integer counts and nested parentheses.
+const atomic={H:1.008,He:4.0026,Li:6.94,Be:9.0122,B:10.81,C:12.011,N:14.007,O:15.999,F:18.998,Ne:20.180,Na:22.990,Mg:24.305,Al:26.982,Si:28.085,P:30.974,S:32.06,Cl:35.45,Ar:39.948,K:39.098,Ca:40.078,Sc:44.956,Ti:47.867,V:50.942,Cr:51.996,Mn:54.938,Fe:55.845,Co:58.933,Ni:58.693,Cu:63.546,Zn:65.38,Ga:69.723,Ge:72.630,As:74.922,Se:78.971,Br:79.904,Kr:83.798,Rb:85.468,Sr:87.62,Ag:107.868,Cd:112.414,Sn:118.710,I:126.904,Ba:137.327,Pt:195.084,Au:196.967,Hg:200.592,Pb:207.2};
+function molarMass(formula){
+  if(!formula||formula.length>100)throw Error('Enter a valid formula.');
+  let i=0;
+  function group(nested=false){
+    let sum=0,found=false;
+    while(i<formula.length){
+      if(formula[i]==='('){i++;const sub=group(true);if(formula[i]!==')')throw Error('Missing closing parenthesis.');i++;const m=number();sum+=sub*m;found=true;}
+      else if(formula[i]===')'){if(!nested)throw Error('Unexpected closing parenthesis.');break;}
+      else {
+        const match=formula.slice(i).match(/^([A-Z][a-z]?)/);
+        if(!match)throw Error('Check formula near: '+formula.slice(i));
+        const symbol=match[1];i+=symbol.length;
+        if(!(symbol in atomic))throw Error('Element not supported: '+symbol);
+        sum+=atomic[symbol]*number();found=true;
+      }
+    }
+    if(!found)throw Error('Empty group in formula.');return sum;
+  }
+  function number(){const m=formula.slice(i).match(/^\d+/);if(m){i+=m[0].length;const n=Number(m[0]);if(n<1||n>10000)throw Error('Invalid atom count.');return n;}return 1;}
+  const mass=group();if(i!==formula.length)throw Error('Formula could not be parsed.');return mass;
+}
+$('molarMass').addEventListener('click',()=>{try{$('massResult').textContent=`Molar mass of ${$('formula').value.trim()} = ${molarMass($('formula').value.trim()).toFixed(3)} g/mol`;}catch(e){$('massResult').textContent=e.message;}});
+$('calcPH').addEventListener('click',()=>{
+ const c=Number($('phConc').value);if(!Number.isFinite(c)||c<=0||c>1){$('phResult').textContent='Enter a concentration greater than 0 and no more than 1 mol/L for this simple approximation.';return;}
+ const pH=$('phType').value==='acid'?-Math.log10(c):14+Math.log10(c);
+ $('phResult').textContent=`Approximate pH = ${pH.toFixed(2)}\nAssumes a strong acid/base that dissociates completely at about 25°C.`;
+});
+</script>
 </body>
 </html>
